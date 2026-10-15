@@ -447,13 +447,13 @@
       loadChatMessages();
     }
 
-    // 카테고리 로드 (기본 카테고리 보장 포함)
+    // 카테고리 로드 ('전체' 중복 방지 필터링 적용)
     async function loadCategories() {
       let cats = [{ name: '자유게시판' }, { name: '실시간단가' }, { name: '수리정비' }, { name: '맛집쉼터' }];
       
       const { data } = await db.from('categories').select('*');
       if (data && data.length > 0) {
-        cats = data;
+        cats = data.filter(c => c.name !== '전체');
       }
 
       const container = document.getElementById('categoryContainer');
