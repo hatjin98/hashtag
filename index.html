@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rider Hotspot</title>
+  <title>#ashtag - 라이더스 핫스팟</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts (필기체 로고용 Caveat 폰트) -->
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -30,6 +32,11 @@
       display: flex;
       align-items: center;
     }
+    .handwriting-logo {
+      font-family: 'Caveat', cursive;
+      font-size: 1.8rem;
+      letter-spacing: -0.5px;
+    }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -51,9 +58,9 @@
         </button>
       </div>
 
-      <!-- #hashtag logo right-offset -->
+      <!-- #ashtag 필기체 로고 (정중앙 오프셋 정렬) -->
       <div class="logo-area">
-        <span class="font-black text-xl tracking-tight text-gray-900 dark:text-white">#RiderHotspot</span>
+        <span class="handwriting-logo font-bold text-gray-900 dark:text-white">#ashtag</span>
       </div>
 
       <div class="flex items-center space-x-2">
@@ -158,7 +165,7 @@
       <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl relative">
         <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
         <div class="w-12 h-12 bg-brand-50 dark:bg-gray-700 text-brand-600 dark:text-brand-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold">#</div>
-        <h3 class="font-bold text-base mb-1">라이더스 핫스팟 로그인</h3>
+        <h3 class="font-bold text-base mb-1">#ashtag 로그인</h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">로그인하고 동료 라이더들과 소통해보세요!</p>
         <div class="space-y-3">
           <button onclick="loginWith('kakao')" class="w-full py-3 bg-[#FEE500] text-[#191919] font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm">
