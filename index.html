@@ -103,12 +103,12 @@
     <!-- Bottom Navigation Bar -->
     <nav class="absolute bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex items-center justify-around px-2 z-30">
       <button onclick="loadPosts()" class="flex flex-col items-center text-brand-600 dark:text-brand-400"><i class="fa-solid fa-house text-lg"></i><span class="text-[10px] mt-1 font-medium">홈</span></button>
-      <button onclick="alert('광장 채팅 기능 구현 중입니다!')" class="flex flex-col items-center text-gray-400 hover:text-gray-600"><i class="fa-solid fa-comments text-lg"></i><span class="text-[10px] mt-1">광장채팅</span></button>
+      <button onclick="alert('광장 채팅 기능 구현 예정입니다!')" class="flex flex-col items-center text-gray-400 hover:text-gray-600"><i class="fa-solid fa-comments text-lg"></i><span class="text-[10px] mt-1">광장채팅</span></button>
       <button onclick="openWriteModal()" class="flex flex-col items-center text-gray-400 hover:text-gray-600"><i class="fa-solid fa-plus-circle text-lg"></i><span class="text-[10px] mt-1">글쓰기</span></button>
-      <button onclick="alert('내 정보 화면 구현 중입니다!')" class="flex flex-col items-center text-gray-400 hover:text-gray-600"><i class="fa-solid fa-user text-lg"></i><span class="text-[10px] mt-1">내정보</span></button>
+      <button onclick="showUserInfo()" class="flex flex-col items-center text-gray-400 hover:text-gray-600"><i class="fa-solid fa-user text-lg"></i><span class="text-[10px] mt-1">내정보</span></button>
     </nav>
 
-    <!-- Login Modal (구글 로그인만 깔끔하게 배치) -->
+    <!-- Login Modal -->
     <div id="loginModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
       <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl relative">
         <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -191,6 +191,9 @@
       if (currentUser) {
         btn.innerText = "로그아웃";
         btn.classList.replace('bg-brand-500', 'bg-gray-500');
+      } else {
+        btn.innerText = "로그인";
+        btn.classList.replace('bg-gray-500', 'bg-brand-500');
       }
     }
 
@@ -239,13 +242,15 @@
 
       if (!content) return alert("내용을 입력해주세요.");
 
-      const { error } = await db.from('posts').insert([{
+      const postData = {
         content: content,
         region_code: region,
-        author_name: currentUser.user_metadata?.full_name || '라이더',
+        author_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || '라이더',
         user_id: currentUser.id,
         category_name: activeCategory === 'all' ? '자유게시판' : activeCategory
-      }]);
+      };
+
+      const { error } = await db.from('posts').insert([postData]);
 
       if (error) {
         alert("글 작성 실패: " + error.message);
@@ -260,12 +265,13 @@
       const { data } = await db.from('categories').select('*');
       if (data && data.length > 0) {
         const container = document.getElementById('categoryContainer');
-        container.innerHTML = `<button onclick="selectCategory('all')" class="category-btn px-3 py-1 bg-brand-500 text-white rounded-full font-bold">전체</button>` +
-          data.map(c => `<button onclick="selectCategory('${c.name}')" class="category-btn px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full">${c.name}</button>`).join('');
+        container.innerHTML = `<button onclick="selectCategory('all')" class="category-btn px-3 py-1 ${activeCategory === 'all' ? 'bg-brand-500 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'} rounded-full">전체</button>` +
+          data.map(c => `<button onclick="selectCategory('${c.name}')" class="category-btn px-3 py-1 ${activeCategory === c.name ? 'bg-brand-500 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'} rounded-full">${c.name}</button>`).join('');
       }
     }
 
     async function addCategory() {
+      if (!currentUser) return alert("로그인이 필요합니다.");
       const input = document.getElementById('newCategoryInput');
       const val = input.value.trim();
       if (!val) return;
@@ -282,11 +288,20 @@
 
     function selectCategory(cat) {
       activeCategory = cat;
+      loadCategories();
       loadPosts();
     }
 
     function filterPosts() {
       loadPosts();
+    }
+
+    function showUserInfo() {
+      if (currentUser) {
+        alert(`로그인 계정: ${currentUser.email || currentUser.user_metadata?.full_name}`);
+      } else {
+        openModal('loginModal');
+      }
     }
 
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
