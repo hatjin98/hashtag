@@ -63,9 +63,8 @@
       </div>
     </header>
 
-    <!-- TAB 1: 🏠 홈 화면 (피드 & 필터) -->
+    <!-- TAB 1: 🏠 홈 화면 -->
     <div id="tab-home" class="tab-content flex-1 flex flex-col overflow-y-auto">
-      <!-- Region & Category Filter Bar -->
       <div class="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-2 space-y-2">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-1.5">
@@ -88,7 +87,6 @@
         </div>
       </div>
 
-      <!-- Main Feed Area -->
       <main class="flex-1 p-4 space-y-4">
         <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden">
           <h2 class="font-bold text-lg relative z-10">대한민국 배달 라이더 광장 🛵</h2>
@@ -111,21 +109,41 @@
       <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
         <div class="text-center text-gray-400 py-4">채팅 내용을 불러오는 중...</div>
       </div>
-      <div class="p-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex space-x-2">
-        <input type="text" id="chatInput" placeholder="동료 라이더들과 실시간으로 소통해보세요!" onkeypress="if(event.key==='Enter') sendChatMessage()" class="flex-1 text-xs px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl outline-none">
+      <div class="p-3 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex items-center space-x-2">
+        <label class="cursor-pointer text-gray-400 hover:text-brand-500 text-base px-1">
+          <i class="fa-solid fa-image"></i>
+          <input type="file" id="chatMediaInput" accept="image/*,video/*" class="hidden" onchange="sendChatMedia(this)">
+        </label>
+        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.key==='Enter') sendChatMessage()" class="flex-1 text-xs px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl outline-none">
         <button onclick="sendChatMessage()" class="px-4 py-2 bg-brand-500 text-white font-bold text-xs rounded-xl">전송</button>
       </div>
     </div>
 
-    <!-- TAB 3: ➕ 글쓰기 화면 -->
-    <div id="tab-write" class="tab-content flex-1 flex flex-col p-4 hidden space-y-4">
+    <!-- TAB 3: ➕ 글쓰기 화면 (미디어 업로드 포함) -->
+    <div id="tab-write" class="tab-content flex-1 flex flex-col p-4 hidden space-y-4 overflow-y-auto">
       <div class="flex items-center justify-between border-b pb-3 dark:border-gray-800">
         <h3 class="font-bold text-sm">✍️ 새로운 소식 남기기</h3>
         <button onclick="switchTab('home')" class="text-xs text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-base"></i> 취소</button>
       </div>
+      
       <div class="space-y-3 flex-1 flex flex-col">
-        <textarea id="postContent" placeholder="수리점 추천, 실시간 단가, 도로 상황 등을 자유롭게 적어주세요!" class="w-full h-40 text-xs p-3 bg-gray-100 dark:bg-gray-700 rounded-xl outline-none focus:ring-1 focus:ring-brand-500 resize-none"></textarea>
-        <button onclick="submitPost()" class="w-full py-3 bg-brand-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-brand-600">게시글 등록하기</button>
+        <textarea id="postContent" placeholder="수리점 추천, 실시간 단가, 도로 상황 등을 자유롭게 적어주세요!" class="w-full h-32 text-xs p-3 bg-gray-100 dark:bg-gray-700 rounded-xl outline-none focus:ring-1 focus:ring-brand-500 resize-none"></textarea>
+        
+        <!-- 미디어 첨부 영역 -->
+        <div class="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-4 text-center">
+          <input type="file" id="postMediaInput" accept="image/*,video/*" class="hidden" onchange="previewPostMedia(this)">
+          <div id="mediaPreviewArea" class="hidden relative mb-2">
+            <img id="previewImg" class="max-h-40 mx-auto rounded-xl object-contain hidden">
+            <video id="previewVideo" class="max-h-40 mx-auto rounded-xl object-contain hidden" controls></video>
+            <button onclick="removeMedia()" class="absolute top-1 right-1 bg-black/60 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <button type="button" onclick="document.getElementById('postMediaInput').click()" class="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center mx-auto space-x-1 hover:text-brand-500">
+            <i class="fa-solid fa-camera text-base"></i>
+            <span>사진 또는 영상 첨부하기</span>
+          </button>
+        </div>
+
+        <button onclick="submitPost()" class="w-full py-3 bg-brand-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-brand-600 mt-auto">게시글 등록하기</button>
       </div>
     </div>
 
@@ -154,11 +172,9 @@
         <div class="w-12 h-12 bg-brand-50 dark:bg-gray-700 text-brand-600 dark:text-brand-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold">#</div>
         <h3 class="font-bold text-base mb-1">#ashtag 로그인</h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">구글 계정으로 간편하게 시작하세요!</p>
-        <div class="space-y-3">
-          <button onclick="loginWith('google')" class="w-full py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm">
-            <i class="fa-brands fa-google text-red-500 text-base"></i><span>구글로 시작하기</span>
-          </button>
-        </div>
+        <button onclick="loginWith('google')" class="w-full py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm">
+          <i class="fa-brands fa-google text-red-500 text-base"></i><span>구글로 시작하기</span>
+        </button>
       </div>
     </div>
 
@@ -186,6 +202,7 @@
     let db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let currentUser = null;
     let activeCategory = 'all';
+    let selectedFile = null;
 
     window.addEventListener('DOMContentLoaded', async () => {
       const { data: { user } } = await db.auth.getUser();
@@ -196,7 +213,6 @@
       loadChatMessages();
     });
 
-    // 탭 전환 시스템
     function switchTab(tabName) {
       if (tabName === 'write' && !currentUser) {
         openModal('loginModal');
@@ -264,7 +280,52 @@
       }
     }
 
-    // 게시글 관련
+    // 파일 미리보기 처리
+    function previewPostMedia(input) {
+      if (input.files && input.files[0]) {
+        selectedFile = input.files[0];
+        const previewArea = document.getElementById('mediaPreviewArea');
+        const img = document.getElementById('previewImg');
+        const video = document.getElementById('previewVideo');
+        const reader = new FileReader();
+
+        previewArea.classList.remove('hidden');
+        if (selectedFile.type.startsWith('image/')) {
+          reader.onload = (e) => {
+            img.src = e.target.result;
+            img.classList.remove('hidden');
+            video.classList.add('hidden');
+          };
+          reader.readAsDataURL(selectedFile);
+        } else if (selectedFile.type.startsWith('video/')) {
+          video.src = URL.createObjectURL(selectedFile);
+          video.classList.remove('hidden');
+          img.classList.add('hidden');
+        }
+      }
+    }
+
+    function removeMedia() {
+      selectedFile = null;
+      document.getElementById('postMediaInput').value = '';
+      document.getElementById('mediaPreviewArea').classList.add('hidden');
+      document.getElementById('previewImg').src = '';
+      document.getElementById('previewVideo').src = '';
+    }
+
+    // 파일 업로드 헬퍼 함수
+    async function uploadFileToStorage(file) {
+      const fileName = `${Date.now()}_${file.name}`;
+      const { data, error } = await db.storage.from('media').upload(fileName, file);
+      if (error) {
+        alert("파일 업로드 실패: " + error.message);
+        return null;
+      }
+      const { data: publicUrlData } = db.storage.from('media').getPublicUrl(fileName);
+      return publicUrlData.publicUrl;
+    }
+
+    // 게시글 로드 (미디어 렌더링 포함)
     async function loadPosts() {
       const container = document.getElementById('feedContainer');
       const region = document.getElementById('regionSelect').value;
@@ -280,23 +341,35 @@
         return;
       }
 
-      container.innerHTML = data.map(post => `
-        <div class="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center space-x-2">
-              <div class="w-9 h-9 rounded-full bg-brand-50 text-brand-600 dark:bg-gray-700 dark:text-brand-400 flex items-center justify-center font-bold text-xs">
-                ${post.author_name ? post.author_name.slice(0, 2) : '라이더'}
+      container.innerHTML = data.map(post => {
+        let mediaTag = '';
+        if (post.media_url) {
+          if (post.media_url.match(/\.(mp4|webm|ogg)$/i) || post.media_url.includes('video')) {
+            mediaTag = `<video src="${post.media_url}" controls class="w-full max-h-60 rounded-xl mb-3 object-cover"></video>`;
+          } else {
+            mediaTag = `<img src="${post.media_url}" class="w-full max-h-60 rounded-xl mb-3 object-cover" />`;
+          }
+        }
+
+        return `
+          <div class="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-2">
+                <div class="w-9 h-9 rounded-full bg-brand-50 text-brand-600 dark:bg-gray-700 dark:text-brand-400 flex items-center justify-center font-bold text-xs">
+                  ${post.author_name ? post.author_name.slice(0, 2) : '라이더'}
+                </div>
+                <div>
+                  <p class="text-xs font-bold">${post.author_name || '익명 라이더'}</p>
+                  <p class="text-[10px] text-gray-400">${new Date(post.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                </div>
               </div>
-              <div>
-                <p class="text-xs font-bold">${post.author_name || '익명 라이더'}</p>
-                <p class="text-[10px] text-gray-400">${new Date(post.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-              </div>
+              ${post.category_name ? `<span class="text-xs px-2 py-0.5 bg-brand-50 text-brand-600 dark:bg-gray-700 dark:text-brand-400 rounded-full font-medium">${post.category_name}</span>` : ''}
             </div>
-            ${post.category_name ? `<span class="text-xs px-2 py-0.5 bg-brand-50 text-brand-600 dark:bg-gray-700 dark:text-brand-400 rounded-full font-medium">${post.category_name}</span>` : ''}
+            <p class="text-xs leading-relaxed mb-3">${post.content}</p>
+            ${mediaTag}
           </div>
-          <p class="text-xs leading-relaxed mb-3">${post.content}</p>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     async function submitPost() {
@@ -304,26 +377,50 @@
       const content = document.getElementById('postContent').value.trim();
       const region = document.getElementById('regionSelect').value;
 
-      if (!content) return alert("내용을 입력해주세요.");
+      if (!content && !selectedFile) return alert("내용이나 미디어를 입력해주세요.");
+
+      let mediaUrl = null;
+      if (selectedFile) {
+        mediaUrl = await uploadFileToStorage(selectedFile);
+      }
 
       const { error } = await db.from('posts').insert([{
-        content: content,
+        content: content || '',
         region_code: region,
         author_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0],
         user_id: currentUser.id,
-        category_name: activeCategory === 'all' ? '자유게시판' : activeCategory
+        category_name: activeCategory === 'all' ? '자유게시판' : activeCategory,
+        media_url: mediaUrl
       }]);
 
       if (error) {
         alert("글 작성 실패: " + error.message);
       } else {
         document.getElementById('postContent').value = '';
+        removeMedia();
         switchTab('home');
         loadPosts();
       }
     }
 
-    // 실시간 채팅 로직
+    // 채팅 미디어 전송
+    async function sendChatMedia(input) {
+      if (!currentUser) return openModal('loginModal');
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const mediaUrl = await uploadFileToStorage(file);
+        if (mediaUrl) {
+          await db.from('chats').insert([{
+            message: '사진/영상 첨부',
+            media_url: mediaUrl,
+            author_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0],
+            user_id: currentUser.id
+          }]);
+          loadChatMessages();
+        }
+      }
+    }
+
     async function loadChatMessages() {
       const chatBox = document.getElementById('chatMessages');
       const { data, error } = await db.from('chats').select('*').order('created_at', { ascending: true }).limit(50);
@@ -333,15 +430,22 @@
         return;
       }
 
-      chatBox.innerHTML = data.map(m => `
-        <div class="bg-gray-50 dark:bg-gray-800 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700">
-          <div class="flex justify-between items-center mb-1">
-            <span class="font-bold text-brand-600 dark:text-brand-400">${m.author_name}</span>
-            <span class="text-[9px] text-gray-400">${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+      chatBox.innerHTML = data.map(m => {
+        let mediaContent = '';
+        if (m.media_url) {
+          mediaContent = `<img src="${m.media_url}" class="max-h-40 rounded-lg mt-2 object-cover" />`;
+        }
+        return `
+          <div class="bg-gray-50 dark:bg-gray-800 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700">
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-bold text-brand-600 dark:text-brand-400">${m.author_name}</span>
+              <span class="text-[9px] text-gray-400">${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+            </div>
+            ${m.message && m.message !== '사진/영상 첨부' ? `<p class="text-gray-800 dark:text-gray-200">${m.message}</p>` : ''}
+            ${mediaContent}
           </div>
-          <p class="text-gray-800 dark:text-gray-200">${m.message}</p>
-        </div>
-      `).join('');
+        `;
+      }).join('');
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
@@ -361,7 +465,6 @@
       loadChatMessages();
     }
 
-    // 카테고리
     async function loadCategories() {
       const { data } = await db.from('categories').select('*');
       if (data && data.length > 0) {
