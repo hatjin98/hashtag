@@ -101,7 +101,7 @@
     <div id="tab-chat" class="tab-content flex-1 flex flex-col hidden h-[calc(100vh-7rem)]">
       <div class="bg-gray-100 dark:bg-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <h3 class="font-bold text-xs flex items-center"><i class="fa-solid fa-comments text-brand-500 mr-2"></i> 전국 라이더 광장 실시간 채팅</h3>
-        <span class="text-[10px] text-green-500 font-bold">● 접속중</span>
+        <span class="text-[10px] text-green-500 font-bold">● 실시간 연결됨</span>
       </div>
       <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
         <div class="text-center text-gray-400 py-4">채팅 내용을 불러오는 중...</div>
@@ -193,6 +193,7 @@
       loadCategories();
       loadPosts();
       loadChatMessages();
+      setupChatRealtime(); // 실시간 채팅 구독 시작
     });
 
     function switchTab(tabName) {
@@ -295,7 +296,6 @@
       document.getElementById('previewVideo').src = '';
     }
 
-    // 파일 업로드 헬퍼 함수
     async function uploadFileToStorage(file) {
       const fileName = `${Date.now()}_${file.name}`;
       const { data, error } = await db.storage.from('media').upload(fileName, file);
@@ -307,7 +307,6 @@
       return publicUrlData.publicUrl;
     }
 
-    // 게시글 로드
     async function loadPosts() {
       const container = document.getElementById('feedContainer');
       const region = document.getElementById('regionSelect').value;
@@ -385,6 +384,15 @@
       }
     }
 
+    // 실시간 채팅 구독 설정 (Supabase Realtime)
+    function setupChatRealtime() {
+      db.channel('public:chats')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chats' }, payload => {
+          loadChatMessages(); // 새로운 메시지가 들어오면 즉시 채팅창 새로고침
+        })
+        .subscribe();
+    }
+
     // 채팅 미디어 전송
     async function sendChatMedia(input) {
       if (!currentUser) return openModal('loginModal');
@@ -398,7 +406,6 @@
             author_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0],
             user_id: currentUser.id
           }]);
-          loadChatMessages();
         }
       }
     }
@@ -437,17 +444,18 @@
       const msg = input.value.trim();
       if (!msg) return;
 
-      await db.from('chats').insert([{
+      const { error } = await db.from('chats').insert([{
         message: msg,
         author_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0],
         user_id: currentUser.id
       }]);
 
-      input.value = '';
-      loadChatMessages();
+      if (!error) {
+        input.value = '';
+        loadChatMessages(); // 내 화면에도 즉시 반영
+      }
     }
 
-    // 카테고리 로드 ('전체' 중복 방지 필터링 적용)
     async function loadCategories() {
       let cats = [{ name: '자유게시판' }, { name: '실시간단가' }, { name: '수리정비' }, { name: '맛집쉼터' }];
       
