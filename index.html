@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rider Hotspot</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .logo-area {
+      position: absolute;
+      left: 50%;
+      transform: translateX(calc(-50% + 35px));
+      display: flex;
+      align-items: center;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex justify-center min-h-screen">
+
+  <!-- Mobile Container -->
+  <div class="w-full max-w-md bg-white dark:bg-gray-900 shadow-xl flex flex-col relative min-h-screen pb-20">
+    
+    <!-- Top Header -->
+    <header class="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <button id="themeToggle" class="text-gray-600 dark:text-gray-300 hover:text-brand-600 transition">
+          <i class="fa-solid fa-moon text-lg"></i>
+        </button>
+        <!-- 관리자 설정 버튼 -->
+        <button id="adminBtn" onclick="openAdminModal()" class="text-gray-600 dark:text-gray-300 hover:text-brand-600 transition">
+          <i class="fa-solid fa-gear text-lg"></i>
+        </button>
+      </div>
+
+      <!-- #hashtag logo right-offset -->
+      <div class="logo-area">
+        <span class="font-black text-xl tracking-tight text-gray-900 dark:text-white">#RiderHotspot</span>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button id="loginBtn" onclick="openLoginModal()" class="text-xs font-bold px-3 py-1.5 bg-brand-500 text-white rounded-full shadow-sm hover:bg-brand-600 transition">
+          로그인
+        </button>
+      </div>
+    </header>
+
+    <!-- Region & Category Filter Bar -->
+    <div class="sticky top-14 z-20 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-2 space-y-2">
+      <!-- 지역 선택 드롭다운 -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-1.5">
+          <i class="fa-solid fa-location-dot text-brand-500 text-xs"></i>
+          <select id="regionSelect" onchange="changeRegion(this.value)" class="text-xs font-bold bg-gray-100 dark:bg-gray-800 border-none rounded-lg px-2 py-1 outline-none cursor-pointer">
+            <option value="all">🌐 전국 전체</option>
+            <option value="seoul_gangnam">📍 서울 강남구</option>
+            <option value="seoul_mapo">📍 서울 마포구</option>
+            <option value="gyeonggi_suwon">📍 경기 수원시</option>
+            <option value="gyeonggi_seongnam">📍 경기 성남시</option>
+            <option value="incheon">📍 인천 전체</option>
+            <option value="busan">📍 부산 전체</option>
+          </select>
+        </div>
+        <span class="text-[10px] text-gray-400">실시간 지역 소통 중</span>
+      </div>
+
+      <!-- 카테고리 스크롤 바 -->
+      <div id="categoryContainer" class="flex space-x-2 text-xs font-medium whitespace-nowrap overflow-x-auto no-scrollbar pt-1">
+        <button class="px-3 py-1 bg-brand-500 text-white rounded-full font-bold">전체</button>
+        <button class="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full">수리점·지사홍보</button>
+        <button class="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full">실시간 단가/도로</button>
+        <button class="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full">바이크/장비</button>
+        <button class="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full">자유게시판</button>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-4 space-y-4">
+      <!-- Welcome Banner -->
+      <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden">
+        <h2 class="font-bold text-lg relative z-10">대한민국 배달 라이더 광장 🛵</h2>
+        <p class="text-xs opacity-90 mt-1 relative z-10" id="bannerRegionText">전국 라이더 소통부터 내 동네 단가 소식까지!</p>
+        <i class="fa-solid fa-motorcycle absolute -right-3 -bottom-3 text-6xl opacity-20"></i>
+      </div>
+
+      <!-- Feed Container -->
+      <div class="space-y-4" id="feedContainer">
+        <!-- Sample Post 1 (지역 정보) -->
+        <div class="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-2">
+              <div class="w-9 h-9 rounded-full bg-brand-50 text-brand-600 dark:bg-gray-700 dark:text-brand-400 flex items-center justify-center font-bold text-xs">강남</div>
+              <div>
+                <p class="text-xs font-bold">강남스무스</p>
+                <p class="text-[10px] text-gray-400">서울 강남구 · 10분 전</p>
+              </div>
+            </div>
+            <span class="text-xs px-2 py-0.5 bg-brand-50 text-brand-600 dark:bg-gray-700 dark:text-brand-400 rounded-full font-medium">수리점·지사홍보</span>
+          </div>
+          <p class="text-xs leading-relaxed mb-3">오늘 강남역 근처 오토바이 수리점 사장님 친절하시고 공임비도 합리적이네요. 필요하신 분들 참고하세요!</p>
+          <div class="flex items-center justify-between text-gray-500 dark:text-gray-400 text-xs pt-2 border-t border-gray-50 dark:border-gray-700">
+            <button class="flex items-center space-x-1 hover:text-red-500 transition"><i class="fa-regular fa-heart"></i> <span>14</span></button>
+            <button class="flex items-center space-x-1 hover:text-brand-500 transition"><i class="fa-regular fa-comment"></i> <span>5</span></button>
+            <button class="hover:text-gray-700"><i class="fa-solid fa-share-nodes"></i></button>
+          </div>
+        </div>
+
+        <!-- Sample Post 2 (전국 정보) -->
+        <div class="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-2">
+              <div class="w-9 h-9 rounded-full bg-blue-50 text-blue-600 dark:bg-gray-700 dark:text-blue-400 flex items-center justify-center font-bold text-xs">전국</div>
+              <div>
+                <p class="text-xs font-bold">안전운전제일</p>
+                <p class="text-[10px] text-gray-400">전국공통 · 30분 전</p>
+              </div>
+            </div>
+            <span class="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 dark:bg-gray-700 dark:text-blue-400 rounded-full font-medium">바이크/장비</span>
+          </div>
+          <p class="text-xs leading-relaxed mb-3">겨울철 방한 토시 어떤 제품 쓰시나요? 방수 잘되고 손 안 시린 제품으로 추천 부탁드립니다!</p>
+          <div class="flex items-center justify-between text-gray-500 dark:text-gray-400 text-xs pt-2 border-t border-gray-50 dark:border-gray-700">
+            <button class="flex items-center space-x-1 hover:text-red-500 transition"><i class="fa-regular fa-heart"></i> <span>28</span></button>
+            <button class="flex items-center space-x-1 hover:text-brand-500 transition"><i class="fa-regular fa-comment"></i> <span>12</span></button>
+            <button class="hover:text-gray-700"><i class="fa-solid fa-share-nodes"></i></button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="absolute bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex items-center justify-around px-2 z-30">
+      <button class="flex flex-col items-center text-brand-600 dark:text-brand-400"><i class="fa-solid fa-house text-lg"></i><span class="text-[10px] mt-1 font-medium">홈</span></button>
+      <button class="flex flex-col items-center text-gray-400 hover:text-gray-600"><i class="fa-solid fa-comments text-lg"></i><span class="text-[10px] mt-1">광장채팅</span></button>
+      <button class="flex flex-col items-center text-gray-400 hover:text-gray-600"><i class="fa-solid fa-plus-circle text-lg"></i><span class="text-[10px] mt-1">글쓰기</span></button>
+      <button class="flex flex-col items-center text-gray-400 hover:text-gray-600"><i class="fa-solid fa-user text-lg"></i><span class="text-[10px] mt-1">내정보</span></button>
+    </nav>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl relative">
+        <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="w-12 h-12 bg-brand-50 dark:bg-gray-700 text-brand-600 dark:text-brand-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold">#</div>
+        <h3 class="font-bold text-base mb-1">라이더스 핫스팟 로그인</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">로그인하고 동료 라이더들과 소통해보세요!</p>
+        <div class="space-y-3">
+          <button onclick="loginWith('kakao')" class="w-full py-3 bg-[#FEE500] text-[#191919] font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm">
+            <i class="fa-solid fa-comment"></i><span>카카오로 시작하기</span>
+          </button>
+          <button onclick="loginWith('naver')" class="w-full py-3 bg-[#03C75A] text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm">
+            <i class="fa-solid fa-n"></i><span>네이버로 시작하기</span>
+          </button>
+          <button onclick="loginWith('google')" class="w-full py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm">
+            <i class="fa-brands fa-google"></i><span>구글로 시작하기</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative max-h-[80vh] overflow-y-auto">
+        <button onclick="closeAdminModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <h3 class="font-bold text-base mb-4 flex items-center"><i class="fa-solid fa-sliders mr-2 text-brand-500"></i> 관리자 설정 패널</h3>
+        
+        <!-- 카테고리 관리 섹션 -->
+        <div class="mb-6">
+          <h4 class="text-xs font-bold text-gray-500 mb-2">카테고리(탭) 관리</h4>
+          <div class="flex space-x-2 mb-3">
+            <input type="text" id="newCategoryInput" placeholder="새 카테고리 이름" class="flex-1 text-xs px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl outline-none focus:ring-1 focus:ring-brand-500">
+            <button onclick="addCategory()" class="px-3 py-2 bg-brand-500 text-white text-xs font-bold rounded-xl">추가</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const _supabase = (SUPABASE_URL !== 'YOUR_SUPABASE_URL') ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    async function loginWith(provider) {
+      if (!_supabase) {
+        alert("Supabase 연결 세팅 후 작동합니다.");
+        return;
+      }
+      await _supabase.auth.signInWithOAuth({ provider: provider });
+    }
+
+    // 지역 변경 처리 함수
+    function changeRegion(val) {
+      const bannerText = document.getElementById('bannerRegionText');
+      if (val === 'all') {
+        bannerText.innerText = "전국 라이더 소통부터 내 동네 단가 소식까지!";
+      } else {
+        const selectedText = document.querySelector(`#regionSelect option[value="${val}"]`).text;
+        bannerText.innerText = `${selectedText} 라이더 전용 소통 및 정보 공유`;
+      }
+    }
+
+    function openLoginModal() { document.getElementById('loginModal').classList.remove('hidden'); }
+    function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
+    function openAdminModal() { document.getElementById('adminModal').classList.remove('hidden'); }
+    function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    function addCategory() {
+      const input = document.getElementById('newCategoryInput');
+      if (!input.value.trim()) return;
+      alert(`'${input.value}' 카테고리가 추가되었습니다.`);
+      input.value = '';
+    }
+  </script>
+</body>
+</html>
