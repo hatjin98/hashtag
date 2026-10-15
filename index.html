@@ -108,17 +108,17 @@
       <button onclick="alert('내 정보 화면 구현 중입니다!')" class="flex flex-col items-center text-gray-400 hover:text-gray-600"><i class="fa-solid fa-user text-lg"></i><span class="text-[10px] mt-1">내정보</span></button>
     </nav>
 
-    <!-- Login Modal -->
+    <!-- Login Modal (구글 로그인만 깔끔하게 배치) -->
     <div id="loginModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
       <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl relative">
         <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
         <div class="w-12 h-12 bg-brand-50 dark:bg-gray-700 text-brand-600 dark:text-brand-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold">#</div>
         <h3 class="font-bold text-base mb-1">#ashtag 로그인</h3>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">로그인하고 동료 라이더들과 소통해보세요!</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">구글 계정으로 간편하게 시작하세요!</p>
         <div class="space-y-3">
-          <button onclick="loginWith('kakao')" class="w-full py-3 bg-[#FEE500] text-[#191919] font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm"><i class="fa-solid fa-comment"></i><span>카카오로 시작하기</span></button>
-          <button onclick="loginWith('naver')" class="w-full py-3 bg-[#03C75A] text-white font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm"><i class="fa-solid fa-n"></i><span>네이버로 시작하기</span></button>
-          <button onclick="loginWith('google')" class="w-full py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm"><i class="fa-brands fa-google"></i><span>구글로 시작하기</span></button>
+          <button onclick="loginWith('google')" class="w-full py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm">
+            <i class="fa-brands fa-google text-red-500 text-base"></i><span>구글로 시작하기</span>
+          </button>
         </div>
       </div>
     </div>
@@ -153,7 +153,6 @@
   </div>
 
   <script>
-    // 입력하신 실제 Supabase 설정값 적용 완료
     const SUPABASE_URL = 'https://ffeghqzayzvgrtmdlvlj.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZWdocXpheXp2Z3J0bWRsdmxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNjY1MzgsImV4cCI6MjEwNzY0MjUzOH0.wFm7T-6R6Nsce7GYafPgzAJCiyP95-zKc70QZDZS14s';
     
@@ -163,7 +162,6 @@
 
     db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 초기화
     window.addEventListener('DOMContentLoaded', async () => {
       const { data: { user } } = await db.auth.getUser();
       currentUser = user;
@@ -172,9 +170,11 @@
       loadPosts();
     });
 
-    // 소셜 로그인 / 로그아웃
     async function loginWith(provider) {
-      await db.auth.signInWithOAuth({ provider: provider });
+      await db.auth.signInWithOAuth({
+        provider: provider,
+        options: { redirectTo: window.location.origin }
+      });
     }
 
     async function handleAuthClick() {
@@ -194,7 +194,6 @@
       }
     }
 
-    // 게시글 불러오기
     async function loadPosts() {
       const container = document.getElementById('feedContainer');
       const region = document.getElementById('regionSelect').value;
@@ -229,7 +228,6 @@
       `).join('');
     }
 
-    // 글 쓰기 등록
     async function submitPost() {
       if (!currentUser) {
         alert("로그인이 필요합니다.");
@@ -258,7 +256,6 @@
       }
     }
 
-    // 카테고리 불러오기 및 추가
     async function loadCategories() {
       const { data } = await db.from('categories').select('*');
       if (data && data.length > 0) {
