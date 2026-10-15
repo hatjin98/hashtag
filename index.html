@@ -388,4 +388,92 @@
     // 채팅 미디어 전송
     async function sendChatMedia(input) {
       if (!currentUser) return openModal('loginModal');
-      if (input.files
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const mediaUrl = await uploadFileToStorage(file);
+        if (mediaUrl) {
+          await db.from('chats').insert([{
+            message: '사진/영상 첨부',
+            media_url: mediaUrl,
+            author_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0],
+            user_id: currentUser.id
+          }]);
+          loadChatMessages();
+        }
+      }
+    }
+
+    async function loadChatMessages() {
+      const chatBox = document.getElementById('chatMessages');
+      const { data, error } = await db.from('chats').select('*').order('created_at', { ascending: true }).limit(50);
+      
+      if (error || !data || data.length === 0) {
+        chatBox.innerHTML = `<p class="text-center text-xs text-gray-400 py-4">아직 메시지가 없습니다. 첫 대화를 시작해보세요!</p>`;
+        return;
+      }
+
+      chatBox.innerHTML = data.map(m => {
+        let mediaContent = '';
+        if (m.media_url) {
+          mediaContent = `<img src="${m.media_url}" class="max-h-40 rounded-lg mt-2 object-cover" />`;
+        }
+        return `
+          <div class="bg-gray-50 dark:bg-gray-800 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700">
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-bold text-brand-600 dark:text-brand-400">${m.author_name}</span>
+              <span class="text-[9px] text-gray-400">${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+            </div>
+            ${m.message && m.message !== '사진/영상 첨부' ? `<p class="text-gray-800 dark:text-gray-200">${m.message}</p>` : ''}
+            ${mediaContent}
+          </div>
+        `;
+      }).join('');
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendChatMessage() {
+      if (!currentUser) return openModal('loginModal');
+      const input = document.getElementById('chatInput');
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      await db.from('chats').insert([{
+        message: msg,
+        author_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0],
+        user_id: currentUser.id
+      }]);
+
+      input.value = '';
+      loadChatMessages();
+    }
+
+    // 카테고리 로드 (기본 카테고리 보장 포함)
+    async function loadCategories() {
+      let cats = [{ name: '자유게시판' }, { name: '실시간단가' }, { name: '수리정비' }, { name: '맛집쉼터' }];
+      
+      const { data } = await db.from('categories').select('*');
+      if (data && data.length > 0) {
+        cats = data;
+      }
+
+      const container = document.getElementById('categoryContainer');
+      container.innerHTML = `<button onclick="selectCategory('all')" class="category-btn px-3 py-1 ${activeCategory === 'all' ? 'bg-brand-500 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'} rounded-full whitespace-nowrap">전체</button>` +
+        cats.map(c => `<button onclick="selectCategory('${c.name}')" class="category-btn px-3 py-1 ${activeCategory === c.name ? 'bg-brand-500 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'} rounded-full whitespace-nowrap">${c.name}</button>`).join('');
+    }
+
+    function selectCategory(cat) {
+      activeCategory = cat;
+      loadCategories();
+      loadPosts();
+    }
+
+    function filterPosts() { loadPosts(); }
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+  </script>
+</body>
+</html>
