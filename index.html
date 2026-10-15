@@ -47,9 +47,6 @@
         <button id="themeToggle" class="text-gray-600 dark:text-gray-300 hover:text-brand-600 transition">
           <i class="fa-solid fa-moon text-lg"></i>
         </button>
-        <button id="adminBtn" onclick="openAdminModal()" class="text-gray-600 dark:text-gray-300 hover:text-brand-600 transition">
-          <i class="fa-solid fa-gear text-lg"></i>
-        </button>
       </div>
 
       <div class="logo-area">
@@ -119,7 +116,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: ➕ 글쓰기 화면 (미디어 업로드 포함) -->
+    <!-- TAB 3: ➕ 글쓰기 화면 -->
     <div id="tab-write" class="tab-content flex-1 flex flex-col p-4 hidden space-y-4 overflow-y-auto">
       <div class="flex items-center justify-between border-b pb-3 dark:border-gray-800">
         <h3 class="font-bold text-sm">✍️ 새로운 소식 남기기</h3>
@@ -175,21 +172,6 @@
         <button onclick="loginWith('google')" class="w-full py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 shadow-sm">
           <i class="fa-brands fa-google text-red-500 text-base"></i><span>구글로 시작하기</span>
         </button>
-      </div>
-    </div>
-
-    <!-- Admin Panel Modal -->
-    <div id="adminModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative max-h-[80vh] overflow-y-auto">
-        <button onclick="closeModal('adminModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-        <h3 class="font-bold text-base mb-4 flex items-center"><i class="fa-solid fa-sliders mr-2 text-brand-500"></i> 관리자 패널</h3>
-        <div class="mb-6">
-          <h4 class="text-xs font-bold text-gray-500 mb-2">새 카테고리 추가</h4>
-          <div class="flex space-x-2">
-            <input type="text" id="newCategoryInput" placeholder="카테고리 이름" class="flex-1 text-xs px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl outline-none">
-            <button onclick="addCategory()" class="px-3 py-2 bg-brand-500 text-white text-xs font-bold rounded-xl">추가</button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -325,7 +307,7 @@
       return publicUrlData.publicUrl;
     }
 
-    // 게시글 로드 (미디어 렌더링 포함)
+    // 게시글 로드
     async function loadPosts() {
       const container = document.getElementById('feedContainer');
       const region = document.getElementById('regionSelect').value;
@@ -406,104 +388,4 @@
     // 채팅 미디어 전송
     async function sendChatMedia(input) {
       if (!currentUser) return openModal('loginModal');
-      if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const mediaUrl = await uploadFileToStorage(file);
-        if (mediaUrl) {
-          await db.from('chats').insert([{
-            message: '사진/영상 첨부',
-            media_url: mediaUrl,
-            author_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0],
-            user_id: currentUser.id
-          }]);
-          loadChatMessages();
-        }
-      }
-    }
-
-    async function loadChatMessages() {
-      const chatBox = document.getElementById('chatMessages');
-      const { data, error } = await db.from('chats').select('*').order('created_at', { ascending: true }).limit(50);
-      
-      if (error || !data || data.length === 0) {
-        chatBox.innerHTML = `<p class="text-center text-xs text-gray-400 py-4">아직 메시지가 없습니다. 첫 대화를 시작해보세요!</p>`;
-        return;
-      }
-
-      chatBox.innerHTML = data.map(m => {
-        let mediaContent = '';
-        if (m.media_url) {
-          mediaContent = `<img src="${m.media_url}" class="max-h-40 rounded-lg mt-2 object-cover" />`;
-        }
-        return `
-          <div class="bg-gray-50 dark:bg-gray-800 p-2.5 rounded-xl border border-gray-100 dark:border-gray-700">
-            <div class="flex justify-between items-center mb-1">
-              <span class="font-bold text-brand-600 dark:text-brand-400">${m.author_name}</span>
-              <span class="text-[9px] text-gray-400">${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-            </div>
-            ${m.message && m.message !== '사진/영상 첨부' ? `<p class="text-gray-800 dark:text-gray-200">${m.message}</p>` : ''}
-            ${mediaContent}
-          </div>
-        `;
-      }).join('');
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    async function sendChatMessage() {
-      if (!currentUser) return openModal('loginModal');
-      const input = document.getElementById('chatInput');
-      const msg = input.value.trim();
-      if (!msg) return;
-
-      await db.from('chats').insert([{
-        message: msg,
-        author_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0],
-        user_id: currentUser.id
-      }]);
-
-      input.value = '';
-      loadChatMessages();
-    }
-
-    async function loadCategories() {
-      const { data } = await db.from('categories').select('*');
-      if (data && data.length > 0) {
-        const container = document.getElementById('categoryContainer');
-        container.innerHTML = `<button onclick="selectCategory('all')" class="category-btn px-3 py-1 ${activeCategory === 'all' ? 'bg-brand-500 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'} rounded-full">전체</button>` +
-          data.map(c => `<button onclick="selectCategory('${c.name}')" class="category-btn px-3 py-1 ${activeCategory === c.name ? 'bg-brand-500 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'} rounded-full">${c.name}</button>`).join('');
-      }
-    }
-
-    async function addCategory() {
-      if (!currentUser) return alert("로그인이 필요합니다.");
-      const input = document.getElementById('newCategoryInput');
-      const val = input.value.trim();
-      if (!val) return;
-      
-      const { error } = await db.from('categories').insert([{ name: val }]);
-      if (error) {
-        alert("카테고리 추가 실패: " + error.message);
-      } else {
-        alert(`'${val}' 카테고리가 추가되었습니다.`);
-        input.value = '';
-        loadCategories();
-      }
-    }
-
-    function selectCategory(cat) {
-      activeCategory = cat;
-      loadCategories();
-      loadPosts();
-    }
-
-    function filterPosts() { loadPosts(); }
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-    function openAdminModal() { openModal('adminModal'); }
-
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-    });
-  </script>
-</body>
-</html>
+      if (input.files
